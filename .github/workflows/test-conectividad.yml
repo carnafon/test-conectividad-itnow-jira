@@ -1,0 +1,158 @@
+name: Test conectividad ServiceNow y Jira
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  test-conectividad:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ======================================================
+      # INFORMACION DEL RUNNER
+      # ======================================================
+
+      - name: Informacion del runner
+        run: |
+          echo "======================================"
+          echo " RUNNER GITHUB ACTIONS"
+          echo "======================================"
+
+          echo "Hostname:"
+          hostname
+
+          echo ""
+          echo "IP publica:"
+          curl -s --max-time 10 https://api.ipify.org || true
+
+          echo ""
+          echo ""
+          echo "Fecha:"
+          date
+
+          echo ""
+          echo "======================================"
+
+
+      # ======================================================
+      # SERVICENOW
+      # ======================================================
+
+      - name: Test DNS ServiceNow
+        run: |
+          echo "======================================"
+          echo " DNS SERVICENOW"
+          echo "======================================"
+
+          nslookup iberdrola.service-now.com || true
+
+
+      - name: Test HTTPS ServiceNow
+        run: |
+          echo "======================================"
+          echo " HTTPS SERVICENOW"
+          echo "======================================"
+
+          curl \
+            -I \
+            --connect-timeout 10 \
+            --max-time 20 \
+            -v \
+            "https://iberdrola.service-now.com" \
+            || true
+
+
+      - name: Test API ServiceNow sin credenciales
+        run: |
+          echo "======================================"
+          echo " API SERVICENOW"
+          echo "======================================"
+
+          HTTP_CODE=$(curl \
+            -s \
+            -o /tmp/servicenow_response.txt \
+            -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 20 \
+            "https://iberdrola.service-now.com/api/now/table/incident?sysparm_limit=1")
+
+          echo "HTTP status: $HTTP_CODE"
+          echo ""
+          echo "Respuesta:"
+          cat /tmp/servicenow_response.txt || true
+          echo ""
+
+
+      # ======================================================
+      # JIRA
+      # ======================================================
+
+      - name: Test DNS Jira
+        run: |
+          echo "======================================"
+          echo " DNS JIRA"
+          echo "======================================"
+
+          nslookup iberdrolasite.atlassian.net || true
+
+
+      - name: Test HTTPS Jira
+        run: |
+          echo "======================================"
+          echo " HTTPS JIRA"
+          echo "======================================"
+
+          curl \
+            -I \
+            --connect-timeout 10 \
+            --max-time 20 \
+            -v \
+            "https://iberdrolasite.atlassian.net/" \
+            || true
+
+
+      - name: Test API Jira sin credenciales
+        run: |
+          echo "======================================"
+          echo " API JIRA"
+          echo "======================================"
+
+          HTTP_CODE=$(curl \
+            -s \
+            -o /tmp/jira_response.txt \
+            -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 20 \
+            "https://iberdrolasite.atlassian.net/rest/api/3/myself")
+
+          echo "HTTP status: $HTTP_CODE"
+          echo ""
+          echo "Respuesta:"
+          cat /tmp/jira_response.txt || true
+          echo ""
+
+
+      # ======================================================
+      # RESUMEN
+      # ======================================================
+
+      - name: Resumen
+        run: |
+          echo ""
+          echo "======================================"
+          echo " PRUEBA FINALIZADA"
+          echo "======================================"
+          echo ""
+          echo "Se han probado:"
+          echo ""
+          echo "ServiceNow:"
+          echo "  https://iberdrola.service-now.com"
+          echo ""
+          echo "Jira:"
+          echo "  https://iberdrolasite.atlassian.net/"
+          echo ""
+          echo "Revisar los HTTP status de los pasos anteriores."
+          echo ""
